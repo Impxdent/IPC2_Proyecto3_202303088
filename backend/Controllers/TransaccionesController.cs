@@ -163,5 +163,29 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
 
             return Ok(respuesta);
         }
+
+        [HttpGet("ingresos-mensuales")]
+        public IActionResult GetIngresosMensuales()
+        {
+            var facturas = LeerXml<List<FacturaXml>>(FacturasPath) ?? new List<FacturaXml>();
+            var fechaFin = DateTime.Now;
+            var fechaInicio = new DateTime(fechaFin.Year, fechaFin.Month, 1).AddMonths(-2);
+            var ingresos = facturas
+                .Select(f => new {
+                    Fecha = DateTime.ParseExact(f.Fecha, "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture),
+                    MontoPagado = f.Monto - f.SaldoPendiente 
+                })
+                .Where(f => f.Fecha >= fechaInicio)
+                .GroupBy(f => new { f.Fecha.Month, f.Fecha.Year })
+                .Select(g => new {
+                    Mes = $"{g.Key.Month}/{g.Key.Year}",
+                    Total = g.Sum(x => x.MontoPagado),
+                    Orden = g.Key.Year * 100 + g.Key.Month
+                })
+                .OrderByDescending(x => x.Orden)
+                .ToList();
+
+            return Ok(ingresos);
+        }
     }
 }
