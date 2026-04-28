@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Xml.Serialization;
 using IPC2_Proyecto3_202303088.backend.Models;
+using System.IO;
 
 namespace IPC2_Proyecto3_202303088.backend.Controllers
 {
@@ -8,7 +9,8 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
     [Route("api/[controller]")]
     public class ConfigController : ControllerBase
     {
-        private readonly string FolderPath = "DataStorage";
+        private readonly string ClientesPath = Path.Combine("DataStorage", "MasterClientes.xml");
+        private readonly string BancosPath = Path.Combine("DataStorage", "MasterBancos.xml");
 
         [HttpPost("cargar")]
         public IActionResult CargarConfiguracion([FromBody] string xmlContent)
@@ -23,44 +25,66 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
                     data = (ConfigData)serializer.Deserialize(reader);
                 }
 
-                ProcesarClientes(data.Clientes);
-                ProcesarBancos(data.Bancos);
+                ActualizarClientes(data.Clientes);
+                ActualizarBancos(data.Bancos);
 
-                return Ok(new { mensaje = "Configuración procesada exitosamente." });
+                return Ok(new { mensaje = "Datos actualizados correctamente." });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { mensaje = "Error al procesar el XML: " + ex.Message });
+                return BadRequest(new { mensaje = "Error: " + ex.Message });
             }
         }
 
-        private void ProcesarClientes(List<Cliente> nuevosClientes)
+        private void ActualizarClientes(List<Cliente> nuevos)
         {
-            // Aquí irá la lógica para leer el archivo maestro de Clientes
-            // verificar si el NIT ya existe para actualizarlo, o agregarlo si es nuevo.
-            //estructura por ahora
-        }
+            List<Cliente> actuales = LeerXml<List<Cliente>>(ClientesPath) ?? new List<Cliente>();
 
-        private void ProcesarBancos(List<Banco> nuevosBancos)
-        {
-            // Similar a clientes, pero para el archivo maestro de Bancos.
-        }
-
-        [HttpDelete("reset")]
-        public IActionResult ResetearDatos()
-        {
-            try
+            foreach (var n in nuevos)
             {
-                if (Directory.Exists(FolderPath))
-                {
-                    DirectoryInfo di = new DirectoryInfo(FolderPath);
-                    foreach (FileInfo file in di.GetFiles()) file.Delete();
-                }
-                return Ok(new { mensaje = "Sistema reseteado a estado inicial." });
+                var existente = actuales.FirstOrDefault(c => c.Nit == n.Nit);
+                if (existente != null)
+                    existente.Nombre = n.Nombre; 
+                else
+                    actuales.Add(n); 
             }
-            catch (Exception ex)
+
+            GuardarXml(actuales, ClientesPath);
+        }
+
+        private void ActualizarBancos(List<Banco> nuevos)
+        {
+            List<Banco> actuales = LeerXml<List<Banco>>(BancosPath) ?? new List<Banco>();
+
+            foreach (var n in nuevos)
             {
-                return StatusCode(500, new { mensaje = "Error al resetear: " + ex.Message });
+                var existente = actuales.FirstOrDefault(b => b.Codigo == n.Codigo);
+                if (existente != null)
+                    existente.Nombre = n.Nombre;
+                else
+                    actuales.Add(n);
+            }
+
+            GuardarXml(actuales, BancosPath);
+        }
+
+        //manejo de archivos xml 
+        private T LeerXml<T>(string path) where T : class
+        {
+            if (!System.IO.File.Exists(path)) return null;
+            XmlSerializer ser = new XmlSerializer(typeof(T));
+            using (FileStream fs = new FileStream(path, FileMode.Open))
+            {
+                return (T)ser.Deserialize(fs);
+            }
+        }
+
+        private void GuardarXml<T>(T data, string path)
+        {
+            XmlSerializer ser = new XmlSerializer(typeof(T));
+            using (FileStream fs = new FileStream(path, FileMode.Create))
+            {
+                ser.Serialize(fs, data);
             }
         }
     }
