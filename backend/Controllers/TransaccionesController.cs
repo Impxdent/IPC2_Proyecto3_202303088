@@ -168,24 +168,25 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
         public IActionResult GetIngresosMensuales()
         {
             var facturas = LeerXml<List<FacturaXml>>(FacturasPath) ?? new List<FacturaXml>();
-            var fechaFin = DateTime.Now;
-            var fechaInicio = new DateTime(fechaFin.Year, fechaFin.Month, 1).AddMonths(-2);
-            var ingresos = facturas
-                .Select(f => new {
-                    Fecha = DateTime.ParseExact(f.Fecha, "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture),
-                    MontoPagado = f.Monto - f.SaldoPendiente 
-                })
-                .Where(f => f.Fecha >= fechaInicio)
-                .GroupBy(f => new { f.Fecha.Month, f.Fecha.Year })
-                .Select(g => new {
-                    Mes = $"{g.Key.Month}/{g.Key.Year}",
-                    Total = g.Sum(x => x.MontoPagado),
-                    Orden = g.Key.Year * 100 + g.Key.Month
-                })
-                .OrderByDescending(x => x.Orden)
-                .ToList();
+            var hoy = DateTime.Now;
+            var meses = Enumerable.Range(0, 3).Select(i => hoy.AddMonths(-i)).Select(d => new { d.Month, d.Year }).ToList();
 
-            return Ok(ingresos);
+            var reporte = meses.Select(m => {
+                var nombreMes = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m.Month);
+                var total = facturas
+                    .Where(f => {
+                        var fecha = DateTime.ParseExact(f.Fecha, "dd/MM/yyyy", CultureInfo.InvariantCulture);
+                        return fecha.Month == m.Month && fecha.Year == m.Year;
+                    })
+                    .Sum(f => f.Monto - f.SaldoPendiente);
+
+                return new {
+                    MesAnio = $"{nombreMes} {m.Year}",
+                    Total = total
+                };
+            }).ToList();
+
+            return Ok(reporte);
         }
     }
 }

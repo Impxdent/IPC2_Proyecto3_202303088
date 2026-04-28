@@ -1,0 +1,54 @@
+@page
+@model frontend.Pages.Consultas.IngresosModel
+@{
+    ViewData["Title"] = "Reporte de Ingresos";
+}
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h3 class="mb-0">Ingresos mensuales de los ultimos 3 meses</h3>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Mes elegido: @DateTime.Now.ToString("MMMM/yyyy")</p>
+            
+            @if (Model.ReporteIngresos != null && Model.ReporteIngresos.Any())
+            {
+                decimal maxMonto = Model.ReporteIngresos.Max(x => x.Total);
+                if (maxMonto == 0) maxMonto = 1; 
+
+                foreach (var item in Model.ReporteIngresos)
+                {
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-bold">@item.MesAnio</span>
+                            <span class="text-success fw-bold">Q. @item.Total.ToString("N2")</span>
+                        </div>
+                        <div class="progress" style="height: 30px;">
+                            @{
+                                var porcentaje = (item.Total / maxMonto) * 100;
+                            }
+                            <div class="progress-bar bg-success" 
+                                 role="progressbar" 
+                                 style="width: @porcentaje.ToString("0")%" 
+                                 aria-valuenow="@porcentaje" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="alert alert-info">No hay transacciones registradas en los últimos meses.</div>
+            }
+
+            <div class="mt-4 no-print">
+                <button onclick="window.print()" class="btn btn-outline-dark">
+                    <i class="bi bi-file-pdf"></i> Generar Reporte PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
