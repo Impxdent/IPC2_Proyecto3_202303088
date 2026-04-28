@@ -18,26 +18,30 @@ namespace frontend.Pages
 
         public async Task<IActionResult> OnPostAsync(IFormFile archivoXml)
         {
-            if (archivoXml == null || archivoXml.Length == 0)
-            {
-                Mensaje = "Error: Por favor selecciona un archivo XML.";
-                Error = true;
-                return Page();
-            }
+            if (archivoXml == null) return Page();
 
             try
             {
-                using (var reader = new StreamReader(archivoXml.OpenReadStream()))
-                {
-                    string contenido = await reader.ReadToEndAsync();
-                }
+                using var reader = new StreamReader(archivoXml.OpenReadStream());
+                string contenidoXml = await reader.ReadToEndAsync();
 
-                Mensaje = "¡Archivo cargado con éxito!";
-                Error = false;
+                using var client = new HttpClient();
+                var response = await client.PostAsJsonAsync("https://localhost:5142/api/config/cargar", contenidoXml);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Mensaje = "Archivo procesado y guardado en el servidor.";
+                    Error = false;
+                }
+                else
+                {
+                    Mensaje = "La API rechazó el archivo.";
+                    Error = true;
+                }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Mensaje = "Error al procesar: " + ex.Message;
+                Mensaje = "Error de conexión: " + ex.Message;
                 Error = true;
             }
 
