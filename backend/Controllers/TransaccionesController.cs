@@ -119,5 +119,49 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
                 ser.Serialize(fs, data);
             }
         }
+
+        [HttpGet("estado-cuenta/{nit?}")]
+        public IActionResult GetEstadoCuenta(string nit = null)
+        {
+            var clientes = LeerXml<List<Cliente>>(ClientesPath) ?? new List<Cliente>();
+            var facturas = LeerXml<List<FacturaXml>>(FacturasPath) ?? new List<FacturaXml>();
+
+            var listaBusqueda = string.IsNullOrEmpty(nit) ? clientes.OrderBy(c => c.Nit).ToList() : clientes.Where(c => c.Nit == nit).ToList();
+
+            var respuesta = new List<EstadoCuentaResponse>();
+
+            foreach (var cliente in listaBusqueda)
+            {
+                var estado = new EstadoCuentaResponse
+                {
+                    Nit = cliente.Nit,
+                    NombreCliente = cliente.Nombre,
+                    SaldoActual = 0, 
+                    Historial = new List<DetalleTransaccion>()
+                };
+
+                var fCliente = facturas.Where(f => f.Nit == cliente.Nit).ToList();
+                
+                foreach (var f in fCliente)
+                {
+                    estado.Historial.Add(new DetalleTransaccion {
+                        Fecha = f.Fecha,
+                        Tipo = "Cargo",
+                        Descripcion = $"Fact. #{f.Numero}",
+                        Monto = f.Monto
+                    });
+                }
+                
+                estado.SaldoActual = fCliente.Sum(f => f.SaldoPendiente) - cliente.SaldoAFavor;
+                
+                estado.Historial = estado.Historial
+                    .OrderByDescending(h => DateTime.ParseExact(h.Fecha, "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture))
+                    .ToList();
+
+                respuesta.Add(estado);
+            }
+
+            return Ok(respuesta);
+        }
     }
 }
