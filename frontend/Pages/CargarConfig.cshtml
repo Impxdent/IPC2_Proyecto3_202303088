@@ -1,0 +1,32 @@
+@page
+@model CargarConfigModel
+@{
+    ViewData["Title"] = "Cargar Configuración";
+}
+
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Cargar Archivo de Configuración</h3>
+        </div>
+        <div class="card-body">
+            <p>Seleccione el archivo <strong>config.xml</strong> para actualizar clientes y bancos.</p>
+            
+            <form method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <input class="form-control" type="file" name="archivoXml" accept=".xml" required>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    Subir y Procesar
+                </button>
+            </form>
+
+            @if (!string.IsNullOrEmpty(Model.Mensaje))
+            {
+                <div class="alert mt-3 @(Model.Error ? "alert-danger" : "alert-success")">
+                    @Model.Mensaje
+                </div>
+            }
+        </div>
+    </div>
+</div>
