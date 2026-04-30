@@ -39,7 +39,7 @@ namespace IPC2_Proyecto3_202303088.backend.Models
     public class PagoXml
     {
         [XmlElement("CODIGO")]
-        public string CodigoBanco { get; set; }
+        public string Codigo { get; set; }
 
         [XmlElement("FECHA")]
         public string Fecha { get; set; }

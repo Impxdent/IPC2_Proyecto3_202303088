@@ -1,54 +1,35 @@
 @page
-@model frontend.Pages.Consultas.IngresosModel
-@{
-    ViewData["Title"] = "Reporte de Ingresos";
-}
-
-<div class="container mt-4">
-    <div class="card shadow">
-        <div class="card-header bg-success text-white">
-            <h3 class="mb-0">Ingresos mensuales de los ultimos 3 meses</h3>
+<div class="container no-print">
+    <h2 class="mb-4">Consultar Ingresos por Banco</h2>
+    
+    <div class="row g-3 align-items-end mb-5 bg-white p-3 rounded shadow-sm">
+        <div class="col-md-3">
+            <label>Mes</label>
+            <select id="mes" class="form-select">
+                <option value="1">Enero</option>
+                <option value="2">Febrero</option>
+                <option value="3">Marzo</option>
+            </select>
         </div>
-        <div class="card-body">
-            <p class="text-muted">Mes elegido: @DateTime.Now.ToString("MMMM/yyyy")</p>
-            
-            @if (Model.ReporteIngresos != null && Model.ReporteIngresos.Any())
-            {
-                decimal maxMonto = Model.ReporteIngresos.Max(x => x.Total);
-                if (maxMonto == 0) maxMonto = 1; 
-
-                foreach (var item in Model.ReporteIngresos)
-                {
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="fw-bold">@item.MesAnio</span>
-                            <span class="text-success fw-bold">Q. @item.Total.ToString("N2")</span>
-                        </div>
-                        <div class="progress" style="height: 30px;">
-                            @{
-                                var porcentaje = (item.Total / maxMonto) * 100;
-                            }
-                            <div class="progress-bar bg-success" 
-                                 role="progressbar" 
-                                 style="width: @porcentaje.ToString("0")%" 
-                                 aria-valuenow="@porcentaje" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="100">
-                            </div>
-                        </div>
-                    </div>
-                }
-            }
-            else
-            {
-                <div class="alert alert-info">No hay transacciones registradas en los últimos meses.</div>
-            }
-
-            <div class="mt-4 no-print">
-                <button onclick="window.print()" class="btn btn-outline-dark">
-                    <i class="bi bi-file-pdf"></i> Generar Reporte PDF
-                </button>
-            </div>
+        <div class="col-md-3">
+            <label>Año</label>
+            <input type="number" id="anio" class="form-control" value="2024">
+        </div>
+        <div class="col-md-3">
+            <button onclick="cargarGrafica()" class="btn btn-primary w-100">Procesar</button>
+        </div>
+        <div class="col-md-3">
+            <button onclick="window.print()" class="btn btn-danger w-100">Guardar como PDF</button>
         </div>
     </div>
 </div>
+
+<div id="contenedorGrafica" class="bg-white p-5 rounded shadow">
+    </div>
+
+<style>
+    @@media print {
+        .no-print { display: none !important; }
+        body { background: white; }
+    }
+</style>

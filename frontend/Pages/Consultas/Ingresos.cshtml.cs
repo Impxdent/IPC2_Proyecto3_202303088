@@ -12,7 +12,7 @@ namespace frontend.Pages.Consultas
             try
             {
                 using var client = new HttpClient();
-                var response = await client.GetFromJsonAsync<List<IngresoView>>("https://localhost:5142/api/transacciones/ingresos-mensuales");
+                var response = await client.GetFromJsonAsync<List<IngresoView>>("http://localhost:5142/devolverResumenPagos");
                 if (response != null)
                 {
                     ReporteIngresos = response;

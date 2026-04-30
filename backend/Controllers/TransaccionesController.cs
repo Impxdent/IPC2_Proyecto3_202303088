@@ -2,17 +2,20 @@ using Microsoft.AspNetCore.Mvc;
 using System.Xml.Serialization;
 using IPC2_Proyecto3_202303088.backend.Models;
 using System.Globalization;
+using System.IO;
 
 namespace IPC2_Proyecto3_202303088.backend.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("/")] 
     public class TransaccionesController : ControllerBase
     {
         private readonly string FacturasPath = Path.Combine("DataStorage", "MasterFacturas.xml");
         private readonly string ClientesPath = Path.Combine("DataStorage", "MasterClientes.xml");
+        private readonly string BancosPath = Path.Combine("DataStorage", "MasterBancos.xml");
+        private readonly string PagosPath = Path.Combine("DataStorage", "MasterPagos.xml");
 
-        [HttpPost("cargar")]
+        [HttpPost("grabarTransaccion")]
         public IActionResult CargarTransacciones([FromBody] string xmlContent)
         {
             try
@@ -26,16 +29,19 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
 
                 ProcesarFacturas(data.Facturas);
 
+                // Guardamos los pagos para el historial de la gráfica antes de aplicarlos
+                ProcesarPagosHistorial(data.Pagos);
+
                 foreach (var pago in data.Pagos)
                 {
                     AplicarPagoFIFO(pago);
                 }
 
-                return Ok(new { mensaje = "Transacciones procesadas y pagos aplicados." });
+                return Ok(new { mensaje = "Transacciones procesadas exitosamente." });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { mensaje = "Error: " + ex.Message });
+                return BadRequest(new { mensaje = "Error en el procesamiento: " + ex.Message });
             }
         }
 
@@ -52,6 +58,13 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
                 }
             }
             GuardarXml(actuales, FacturasPath);
+        }
+
+        private void ProcesarPagosHistorial(List<PagoXml> nuevosPagos)
+        {
+            var historial = LeerXml<List<PagoXml>>(PagosPath) ?? new List<PagoXml>();
+            historial.AddRange(nuevosPagos);
+            GuardarXml(historial, PagosPath);
         }
 
         private void AplicarPagoFIFO(PagoXml pago)
@@ -96,31 +109,7 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
             GuardarXml(clientes, ClientesPath);
         }
 
-        private T LeerXml<T>(string path) where T : class
-        {
-            if (!System.IO.File.Exists(path)) return null;
-
-            XmlSerializer ser = new XmlSerializer(typeof(T));
-            using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-            {
-                return (T)ser.Deserialize(fs);
-            }
-        }
-
-        private void GuardarXml<T>(T data, string path)
-        {
-            XmlSerializer ser = new XmlSerializer(typeof(T));
-            
-            string folder = Path.GetDirectoryName(path);
-            if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
-
-            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
-            {
-                ser.Serialize(fs, data);
-            }
-        }
-
-        [HttpGet("estado-cuenta/{nit?}")]
+        [HttpGet("devolverEstadoCuenta/{nit?}")]
         public IActionResult GetEstadoCuenta(string nit = null)
         {
             var clientes = LeerXml<List<Cliente>>(ClientesPath) ?? new List<Cliente>();
@@ -155,7 +144,7 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
                 estado.SaldoActual = fCliente.Sum(f => f.SaldoPendiente) - cliente.SaldoAFavor;
                 
                 estado.Historial = estado.Historial
-                    .OrderByDescending(h => DateTime.ParseExact(h.Fecha, "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture))
+                    .OrderByDescending(h => DateTime.ParseExact(h.Fecha, "dd/MM/yyyy", CultureInfo.InvariantCulture))
                     .ToList();
 
                 respuesta.Add(estado);
@@ -164,29 +153,44 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
             return Ok(respuesta);
         }
 
-        [HttpGet("ingresos-mensuales")]
-        public IActionResult GetIngresosMensuales()
+        [HttpGet("devolverResumenPagos")]
+        public IActionResult DevolverResumenPagos()
         {
-            var facturas = LeerXml<List<FacturaXml>>(FacturasPath) ?? new List<FacturaXml>();
-            var hoy = DateTime.Now;
-            var meses = Enumerable.Range(0, 3).Select(i => hoy.AddMonths(-i)).Select(d => new { d.Month, d.Year }).ToList();
+            var pagos = LeerXml<List<PagoXml>>(PagosPath) ?? new List<PagoXml>();
+            var bancos = LeerXml<List<Banco>>(BancosPath) ?? new List<Banco>();
+            var mesesInteres = new[] { 3, 2, 1 }; 
+            int anioInteres = 2024;
 
-            var reporte = meses.Select(m => {
-                var nombreMes = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m.Month);
-                var total = facturas
-                    .Where(f => {
-                        var fecha = DateTime.ParseExact(f.Fecha, "dd/MM/yyyy", CultureInfo.InvariantCulture);
-                        return fecha.Month == m.Month && fecha.Year == m.Year;
-                    })
-                    .Sum(f => f.Monto - f.SaldoPendiente);
-
-                return new {
-                    MesAnio = $"{nombreMes} {m.Year}",
-                    Total = total
-                };
+            var reporte = bancos.Select(b => new {
+                Nombre = b.Nombre,
+                Valores = mesesInteres.Select(m => new {
+                    Mes = m,
+                    Total = pagos.Where(p => p.Codigo == b.Codigo && DateTime.ParseExact(p.Fecha, "dd/MM/yyyy", CultureInfo.InvariantCulture).Month == m && DateTime.ParseExact(p.Fecha, "dd/MM/yyyy", CultureInfo.InvariantCulture).Year == anioInteres).Sum(p => p.Monto)
+                }).ToList()
             }).ToList();
 
             return Ok(reporte);
+        }
+
+        private T LeerXml<T>(string path) where T : class
+        {
+            if (!System.IO.File.Exists(path)) return null;
+            XmlSerializer ser = new XmlSerializer(typeof(T));
+            using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+            {
+                return (T)ser.Deserialize(fs);
+            }
+        }
+
+        private void GuardarXml<T>(T data, string path)
+        {
+            XmlSerializer ser = new XmlSerializer(typeof(T));
+            string folder = Path.GetDirectoryName(path);
+            if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            {
+                ser.Serialize(fs, data);
+            }
         }
     }
 }

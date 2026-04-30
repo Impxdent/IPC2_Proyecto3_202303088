@@ -22,7 +22,7 @@ namespace frontend.Pages.Consultas
             {
                 var client = _httpClientFactory.CreateClient();
                 
-                string url = "https://localhost:5142/api/transacciones/estado-cuenta";
+                string url = "http://localhost:5142/devolverEstadoCuenta";
                 if (!string.IsNullOrEmpty(nit))
                 {
                     url += $"/{nit}";

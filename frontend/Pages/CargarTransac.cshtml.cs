@@ -26,8 +26,11 @@ namespace frontend.Pages
                 using var reader = new StreamReader(archivoXml.OpenReadStream());
                 string contenidoXml = await reader.ReadToEndAsync();
 
-                using var client = new HttpClient();
-                var response = await client.PostAsJsonAsync("https://localhost:5142/api/transacciones/cargar", contenidoXml);
+                var handler = new HttpClientHandler();
+                handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+
+                using var client = new HttpClient(handler);
+                var response = await client.PostAsJsonAsync("http://localhost:5142/grabarTransaccion", contenidoXml);
 
                 if (response.IsSuccessStatusCode)
                 {

@@ -1,0 +1,30 @@
+<CONFIG>
+  <CLIENTES>
+    <CLIENTE>
+      <NIT>399399-K</NIT>
+      <NOMBRE>Almacén Guatemalteco</NOMBRE>
+    </CLIENTE>
+    <CLIENTE>
+      <NIT>123456-7</NIT>
+      <NOMBRE>Tienda La Bendición</NOMBRE>
+    </CLIENTE>
+    <CLIENTE>
+      <NIT>987654-3</NIT>
+      <NOMBRE>Distribuidora Central</NOMBRE>
+    </CLIENTE>
+  </CLIENTES>
+  <BANCOS>
+    <BANCO>
+      <CODIGO>BI</CODIGO>
+      <NOMBRE>Banco Industrial</NOMBRE>
+    </BANCO>
+    <BANCO>
+      <CODIGO>G&amp;T</CODIGO>
+      <NOMBRE>Banco G&amp;T Continental</NOMBRE>
+    </BANCO>
+    <BANCO>
+      <CODIGO>BANRURAL</CODIGO>
+      <NOMBRE>Banrural</NOMBRE>
+    </BANCO>
+  </BANCOS>
+</CONFIG>

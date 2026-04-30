@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ArrayOfFacturaXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <FacturaXml>
+    <NUMERO>10</NUMERO>
+    <NIT>399399-K</NIT>
+    <FECHA>28/03/2024</FECHA>
+    <MONTO>300.00</MONTO>
+  </FacturaXml>
+  <FacturaXml>
+    <NUMERO>11</NUMERO>
+    <NIT>399399-K</NIT>
+    <FECHA>31/03/2024</FECHA>
+    <MONTO>500.00</MONTO>
+  </FacturaXml>
+  <FacturaXml>
+    <NUMERO>500</NUMERO>
+    <NIT>123456-7</NIT>
+    <FECHA>01/04/2024</FECHA>
+    <MONTO>1000.00</MONTO>
+  </FacturaXml>
+</ArrayOfFacturaXml>
