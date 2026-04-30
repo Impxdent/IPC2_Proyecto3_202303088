@@ -20,38 +20,40 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
         [HttpPost("grabarTransaccion")]
         public IActionResult CargarTransacciones([FromBody] string xmlContent)
         {
-            try
-            {
+            try {
                 XmlSerializer serializer = new XmlSerializer(typeof(TransaccionesData));
                 TransaccionesData data;
-                using (StringReader reader = new StringReader(xmlContent))
-                {
+                using (StringReader reader = new StringReader(xmlContent)) {
                     data = (TransaccionesData)serializer.Deserialize(reader);
                 }
 
-                ProcesarFacturas(data.Facturas);
-                ProcesarPagosHistorial(data.Pagos);
+                var facturasMaster = LeerXml<List<FacturaXml>>(FacturasPath) ?? new List<FacturaXml>();
+                foreach (var f in data.Facturas) {
+                    if (!facturasMaster.Any(x => x.NumeroFactura == f.NumeroFactura)) {
+                        f.SaldoPendiente = f.Valor;
+                        f.Estado = "Pendiente";
+                        facturasMaster.Add(f);
+                    }
+                }
+                GuardarXml(facturasMaster, FacturasPath);
 
-                foreach (var pago in data.Pagos)
-                {
-                    AplicarPagoFIFO(pago);
+                foreach (var pago in data.Pagos) {
+                    AplicarPagoFIFO(pago); 
+                    
+                    var pagosMaster = LeerXml<List<PagoXml>>(PagosPath) ?? new List<PagoXml>();
+                    pagosMaster.Add(pago);
+                    GuardarXml(pagosMaster, PagosPath);
                 }
 
-                var facturasFinales = LeerXml<List<FacturaXml>>(FacturasPath);
-                var salida = new RespuestaTransaccion {
-                    Mensaje = "Transacciones procesadas con éxito",
-                    Facturas = facturasFinales.Select(f => new FacturaResumen {
-                        NumeroFactura = f.NumeroFactura,
-                        Estado = f.Estado,
-                        SaldoRestante = f.SaldoPendiente
-                    }).ToList()
+                var respuesta = new RespuestaTransaccionXml {
+                    Mensaje = "Archivo procesado exitosamente",
+                    TotalFacturas = data.Facturas.Count,
+                    TotalPagos = data.Pagos.Count
                 };
 
-                var xmlSalida = SerializarAXml(salida);
-                return Ok(new { mensaje = "Procesado", xmlSalida = xmlSalida });
+                return Ok(respuesta); 
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 return BadRequest(new { mensaje = "Error: " + ex.Message });
             }
         }

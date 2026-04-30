@@ -52,14 +52,15 @@ namespace IPC2_Proyecto3_202303088.backend.Models
     }
 
     [XmlRoot("respuesta")]
-    public class RespuestaTransaccion
-    {
+    public class RespuestaTransaccionXml {
         [XmlElement("mensaje")]
         public string Mensaje { get; set; }
-
-        [XmlArray("facturasProcesadas")]
-        [XmlArrayItem("factura")]
-        public List<FacturaResumen> Facturas { get; set; } = new List<FacturaResumen>();
+        
+        [XmlElement("totalFacturas")]
+        public int TotalFacturas { get; set; }
+        
+        [XmlElement("totalPagos")]
+        public int TotalPagos { get; set; }
     }
 
     public class FacturaResumen
