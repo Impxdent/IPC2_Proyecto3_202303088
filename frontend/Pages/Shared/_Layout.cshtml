@@ -24,7 +24,7 @@
         <header>
             <nav class="navbar navbar-expand-lg navbar-dark navbar-custom mb-4 shadow-sm">
                 <div class="container">
-                    <a class="navbar-brand" asp-page="/Index">Tienda Virtual</a>
+                    <a class="navbar-brand" asp-page="/Index">ITSGA</a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                         <span class="navbar-toggler-icon"></span>
                     </button>
@@ -49,9 +49,7 @@
                                 <a class="nav-link" asp-page="/Ayuda"><i class="bi bi-question-circle me-1"></i> Ayuda</a>
                             </li>
                             <li class="nav-item ms-lg-3">
-                                <button onclick="resetearSistema()" class="btn btn-outline-light btn-sm">
-                                    <i class="bi bi-trash"></i> Limpiar Datos
-                                </button>
+                                <button type="button" class="btn btn-outline-danger" onclick="limpiarTodoElSistema()">Limpiar Datos</button>
                             </li>
                         </ul>
                     </div>
@@ -74,24 +72,31 @@
         <script src="~/lib/jquery/dist/jquery.min.js"></script>
         <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
         <script src="~/js/site.js" asp-append-version="true"></script>
+
+        <script>
+            async function limpiarTodoElSistema() {
+                if (!confirm("¿Estás seguro de que deseas eliminar todos los datos del sistema?")) return;
+
+                try {
+                    const response = await fetch('http://localhost:5142/limpiarDatos', {
+                        method: 'POST'
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        alert(data.mensaje);
+                        window.location.href = '/Index'; 
+                    } else {
+                        alert("Error al limpiar: " + (data.mensaje || "Error desconocido"));
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert("No se pudo conectar con el servidor backend en el puerto 5142.");
+                }
+            }
+        </script>
+
         @await RenderSectionAsync("Scripts", required: false)
     </body>
 </html>
-
-@section Scripts {
-    <script>
-        function resetearSistema() {
-            if(confirm("¿Desea eliminar todos los datos?")) {
-                fetch('/limpiarDatos', { method: 'POST' }) 
-                .then(res => {
-                    if(res.ok) {
-                        alert("Datos eliminados");
-                        location.reload(); 
-                    } else {
-                        alert("Error al limpiar");
-                    }
-                });
-            }
-        }
-    </script>
-}

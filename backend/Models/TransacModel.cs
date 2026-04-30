@@ -3,51 +3,69 @@ using System.Collections.Generic;
 
 namespace IPC2_Proyecto3_202303088.backend.Models
 {
-    [XmlRoot("TRANSACCIONES")]
+    [XmlRoot("transacciones")]
     public class TransaccionesData
     {
-        [XmlArray("FACTURAS")]
-        [XmlArrayItem("FACTURA")]
+        [XmlArray("facturas")]
+        [XmlArrayItem("factura")]
         public List<FacturaXml> Facturas { get; set; }
 
-        [XmlArray("PAGOS")]
-        [XmlArrayItem("PAGO")]
+        [XmlArray("pagos")]
+        [XmlArrayItem("pago")]
         public List<PagoXml> Pagos { get; set; }
     }
 
     public class FacturaXml
     {
-        [XmlElement("NUMERO")]
-        public string Numero { get; set; }
+        [XmlElement("numeroFactura")]
+        public string NumeroFactura { get; set; }
 
-        [XmlElement("NIT")]
-        public string Nit { get; set; }
+        [XmlElement("NITcliente")]
+        public string NitCliente { get; set; }
 
-        [XmlElement("FECHA")]
+        [XmlElement("fecha")]
         public string Fecha { get; set; }
 
-        [XmlElement("MONTO")]
-        public decimal Monto { get; set; }
+        [XmlElement("valor")]
+        public decimal Valor { get; set; }
 
-        [XmlIgnore]
-        public decimal SaldoPendiente { get; set; }
+        [XmlIgnore] 
+        public decimal SaldoPendiente { get; set; } 
 
-        [XmlIgnore]
+        [XmlIgnore] 
         public string Estado { get; set; } = "Pendiente";
     }
 
     public class PagoXml
     {
-        [XmlElement("CODIGO")]
+        [XmlElement("codigoBanco")]
         public string Codigo { get; set; }
 
-        [XmlElement("FECHA")]
+        [XmlElement("fecha")]
         public string Fecha { get; set; }
 
-        [XmlElement("NIT")]
+        [XmlElement("NITcliente")]
         public string Nit { get; set; }
 
-        [XmlElement("MONTO")]
+        [XmlElement("valor")]
         public decimal Monto { get; set; }
+    }
+
+    [XmlRoot("respuesta")]
+    public class RespuestaTransaccion
+    {
+        [XmlElement("mensaje")]
+        public string Mensaje { get; set; }
+
+        [XmlArray("facturasProcesadas")]
+        [XmlArrayItem("factura")]
+        public List<FacturaResumen> Facturas { get; set; } = new List<FacturaResumen>();
+    }
+
+    public class FacturaResumen
+    {
+        public string NumeroFactura { get; set; }
+        public string Estado { get; set; }
+        public decimal SaldoRestante { get; set; }
     }
 }

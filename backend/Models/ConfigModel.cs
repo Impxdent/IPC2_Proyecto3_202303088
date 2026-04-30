@@ -3,24 +3,24 @@ using System.Collections.Generic;
 
 namespace IPC2_Proyecto3_202303088.backend.Models
 {
-    [XmlRoot("CONFIG")]
+    [XmlRoot("config")]
     public class ConfigData
     {
-        [XmlArray("CLIENTES")]
-        [XmlArrayItem("CLIENTE")]
+        [XmlArray("clientes")]
+        [XmlArrayItem("cliente")]
         public List<Cliente> Clientes { get; set; }
 
-        [XmlArray("BANCOS")]
-        [XmlArrayItem("BANCO")]
+        [XmlArray("bancos")]
+        [XmlArrayItem("banco")]
         public List<Banco> Bancos { get; set; }
     }
 
     public class Cliente
     {
-        [XmlElement("NIT")]
+        [XmlElement("nit")]
         public string Nit { get; set; }
 
-        [XmlElement("NOMBRE")]
+        [XmlElement("nombre")]
         public string Nombre { get; set; }
 
         [XmlIgnore]
@@ -29,10 +29,10 @@ namespace IPC2_Proyecto3_202303088.backend.Models
 
     public class Banco
     {
-        [XmlElement("CODIGO")]
+        [XmlElement("codigo")]
         public string Codigo { get; set; }
 
-        [XmlElement("NOMBRE")]
+        [XmlElement("nombre")]
         public string Nombre { get; set; }
     }
 }

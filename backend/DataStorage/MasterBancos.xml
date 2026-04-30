@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ArrayOfBanco xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Banco>
-    <CODIGO>BI</CODIGO>
-    <NOMBRE>Banco Industrial</NOMBRE>
+    <codigo>1</codigo>
+    <nombre>Banco Industrial</nombre>
   </Banco>
   <Banco>
-    <CODIGO>G&amp;T</CODIGO>
-    <NOMBRE>Banco G&amp;T Continental</NOMBRE>
+    <codigo>2</codigo>
+    <nombre>Banco Promerica</nombre>
   </Banco>
   <Banco>
-    <CODIGO>BANRURAL</CODIGO>
-    <NOMBRE>Banrural</NOMBRE>
+    <codigo>3</codigo>
+    <nombre>Banco de Desarrollo Rural</nombre>
+  </Banco>
+  <Banco>
+    <codigo>4</codigo>
+    <nombre>Banco GYT Continental</nombre>
   </Banco>
 </ArrayOfBanco>

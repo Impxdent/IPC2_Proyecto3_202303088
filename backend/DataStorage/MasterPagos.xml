@@ -1,51 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ArrayOfPagoXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <PagoXml>
-    <CODIGO>BI</CODIGO>
-    <FECHA>02/04/2024</FECHA>
-    <NIT>399399-K</NIT>
-    <MONTO>450.00</MONTO>
+    <codigoBanco>1</codigoBanco>
+    <fecha>02/04/2026</fecha>
+    <NITcliente>A1B2C3</NITcliente>
+    <valor>1500</valor>
   </PagoXml>
   <PagoXml>
-    <CODIGO>BANRURAL</CODIGO>
-    <FECHA>03/04/2024</FECHA>
-    <NIT>123456-7</NIT>
-    <MONTO>200.00</MONTO>
+    <codigoBanco>2</codigoBanco>
+    <fecha>06/04/2026</fecha>
+    <NITcliente>D4E5F6</NITcliente>
+    <valor>2300</valor>
   </PagoXml>
   <PagoXml>
-    <CODIGO>BI</CODIGO>
-    <FECHA>02/04/2024</FECHA>
-    <NIT>399399-K</NIT>
-    <MONTO>450.00</MONTO>
+    <codigoBanco>3</codigoBanco>
+    <fecha>11/04/2026</fecha>
+    <NITcliente>J1K2L3</NITcliente>
+    <valor>875</valor>
   </PagoXml>
   <PagoXml>
-    <CODIGO>BANRURAL</CODIGO>
-    <FECHA>03/04/2024</FECHA>
-    <NIT>123456-7</NIT>
-    <MONTO>200.00</MONTO>
+    <codigoBanco>99</codigoBanco>
+    <fecha>16/04/2026</fecha>
+    <NITcliente>M4N5O6</NITcliente>
+    <valor>3200</valor>
   </PagoXml>
   <PagoXml>
-    <CODIGO>BI</CODIGO>
-    <FECHA>02/04/2024</FECHA>
-    <NIT>399399-K</NIT>
-    <MONTO>450.00</MONTO>
-  </PagoXml>
-  <PagoXml>
-    <CODIGO>BANRURAL</CODIGO>
-    <FECHA>03/04/2024</FECHA>
-    <NIT>123456-7</NIT>
-    <MONTO>200.00</MONTO>
-  </PagoXml>
-  <PagoXml>
-    <CODIGO>BI</CODIGO>
-    <FECHA>02/04/2024</FECHA>
-    <NIT>399399-K</NIT>
-    <MONTO>450.00</MONTO>
-  </PagoXml>
-  <PagoXml>
-    <CODIGO>BANRURAL</CODIGO>
-    <FECHA>03/04/2024</FECHA>
-    <NIT>123456-7</NIT>
-    <MONTO>200.00</MONTO>
+    <codigoBanco>88</codigoBanco>
+    <fecha>20/04/2026</fecha>
+    <NITcliente>X5X5X5</NITcliente>
+    <valor>500</valor>
   </PagoXml>
 </ArrayOfPagoXml>

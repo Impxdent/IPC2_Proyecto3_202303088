@@ -1,15 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ArrayOfCliente xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Cliente>
-    <NIT>399399-K</NIT>
-    <NOMBRE>Almacén Guatemalteco</NOMBRE>
-  </Cliente>
-  <Cliente>
-    <NIT>123456-7</NIT>
-    <NOMBRE>Tienda La Bendición</NOMBRE>
-  </Cliente>
-  <Cliente>
-    <NIT>987654-3</NIT>
-    <NOMBRE>Distribuidora Central</NOMBRE>
+    <nombre>Farmacia San José</nombre>
   </Cliente>
 </ArrayOfCliente>

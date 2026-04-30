@@ -81,5 +81,6 @@ namespace frontend.Pages
         public int clientesActualizados { get; set; }
         public int bancosCreados { get; set; }
         public int bancosActualizados { get; set; }
+        public string mensaje { get; set; }
     }
 }

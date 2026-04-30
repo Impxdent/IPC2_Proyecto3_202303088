@@ -3,6 +3,8 @@ using System.Xml.Serialization;
 using IPC2_Proyecto3_202303088.backend.Models;
 using System.Globalization;
 using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace IPC2_Proyecto3_202303088.backend.Controllers
 {
@@ -28,8 +30,6 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
                 }
 
                 ProcesarFacturas(data.Facturas);
-
-                // Guardamos los pagos para el historial de la gráfica antes de aplicarlos
                 ProcesarPagosHistorial(data.Pagos);
 
                 foreach (var pago in data.Pagos)
@@ -37,11 +37,32 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
                     AplicarPagoFIFO(pago);
                 }
 
-                return Ok(new { mensaje = "Transacciones procesadas exitosamente." });
+                var facturasFinales = LeerXml<List<FacturaXml>>(FacturasPath);
+                var salida = new RespuestaTransaccion {
+                    Mensaje = "Transacciones procesadas con éxito",
+                    Facturas = facturasFinales.Select(f => new FacturaResumen {
+                        NumeroFactura = f.NumeroFactura,
+                        Estado = f.Estado,
+                        SaldoRestante = f.SaldoPendiente
+                    }).ToList()
+                };
+
+                var xmlSalida = SerializarAXml(salida);
+                return Ok(new { mensaje = "Procesado", xmlSalida = xmlSalida });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { mensaje = "Error en el procesamiento: " + ex.Message });
+                return BadRequest(new { mensaje = "Error: " + ex.Message });
+            }
+        }
+
+        private string SerializarAXml<T>(T objeto)
+        {
+            XmlSerializer ser = new XmlSerializer(typeof(T));
+            using (StringWriter writer = new StringWriter())
+            {
+                ser.Serialize(writer, objeto);
+                return writer.ToString();
             }
         }
 
@@ -50,9 +71,10 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
             var actuales = LeerXml<List<FacturaXml>>(FacturasPath) ?? new List<FacturaXml>();
             foreach (var f in nuevas)
             {
-                if (!actuales.Any(x => x.Numero == f.Numero))
+                // Verificamos si la factura ya existe por número
+                if (!actuales.Any(x => x.NumeroFactura == f.NumeroFactura))
                 {
-                    f.SaldoPendiente = f.Monto; 
+                    f.SaldoPendiente = f.Valor; // El saldo inicial es el valor total
                     f.Estado = "Pendiente";
                     actuales.Add(f);
                 }
@@ -72,12 +94,17 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
             var todasFacturas = LeerXml<List<FacturaXml>>(FacturasPath) ?? new List<FacturaXml>();
             var clientes = LeerXml<List<Cliente>>(ClientesPath) ?? new List<Cliente>();
             
+            // Buscamos al cliente (Usando el nombre de propiedad 'Nit' definida en tu PagoXml)
             var cliente = clientes.FirstOrDefault(c => c.Nit == pago.Nit);
             if (cliente == null) return; 
 
+            // Obtener facturas pendientes del cliente ordenadas por fecha (FIFO)
             var pendientes = todasFacturas
-                .Where(f => f.Nit == pago.Nit && f.Estado != "Pagada")
-                .OrderBy(f => DateTime.ParseExact(f.Fecha, "dd/MM/yyyy", CultureInfo.InvariantCulture))
+                .Where(f => f.NitCliente == pago.Nit && f.Estado != "Pagada")
+                .OrderBy(f => {
+                    DateTime.TryParseExact(f.Fecha, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dt);
+                    return dt;
+                })
                 .ToList();
 
             decimal montoDisponible = pago.Monto;
@@ -100,6 +127,7 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
                 }
             }
 
+            // Si sobró dinero del pago, se va a saldo a favor
             if (montoDisponible > 0)
             {
                 cliente.SaldoAFavor += montoDisponible;
@@ -115,7 +143,9 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
             var clientes = LeerXml<List<Cliente>>(ClientesPath) ?? new List<Cliente>();
             var facturas = LeerXml<List<FacturaXml>>(FacturasPath) ?? new List<FacturaXml>();
 
-            var listaBusqueda = string.IsNullOrEmpty(nit) ? clientes.OrderBy(c => c.Nit).ToList() : clientes.Where(c => c.Nit == nit).ToList();
+            var listaBusqueda = string.IsNullOrEmpty(nit) 
+                ? clientes.OrderBy(c => c.Nit).ToList() 
+                : clientes.Where(c => c.Nit == nit).ToList();
 
             var respuesta = new List<EstadoCuentaResponse>();
 
@@ -125,26 +155,30 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
                 {
                     Nit = cliente.Nit,
                     NombreCliente = cliente.Nombre,
-                    SaldoActual = 0, 
+                    SaldoActual = 0,
                     Historial = new List<DetalleTransaccion>()
                 };
 
-                var fCliente = facturas.Where(f => f.Nit == cliente.Nit).ToList();
+                var fCliente = facturas.Where(f => f.NitCliente == cliente.Nit).ToList();
                 
                 foreach (var f in fCliente)
                 {
                     estado.Historial.Add(new DetalleTransaccion {
                         Fecha = f.Fecha,
                         Tipo = "Cargo",
-                        Descripcion = $"Fact. #{f.Numero}",
-                        Monto = f.Monto
+                        Descripcion = $"Fact. #{f.NumeroFactura}",
+                        Monto = f.Valor
                     });
                 }
                 
+                // Saldo actual = Suma de pendientes - saldo a favor
                 estado.SaldoActual = fCliente.Sum(f => f.SaldoPendiente) - cliente.SaldoAFavor;
                 
                 estado.Historial = estado.Historial
-                    .OrderByDescending(h => DateTime.ParseExact(h.Fecha, "dd/MM/yyyy", CultureInfo.InvariantCulture))
+                    .OrderByDescending(h => {
+                        DateTime.TryParseExact(h.Fecha, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dt);
+                        return dt;
+                    })
                     .ToList();
 
                 respuesta.Add(estado);
@@ -154,43 +188,52 @@ namespace IPC2_Proyecto3_202303088.backend.Controllers
         }
 
         [HttpGet("devolverResumenPagos")]
-        public IActionResult DevolverResumenPagos()
+        public IActionResult DevolverResumenPagos([FromQuery] int mes = 4, [FromQuery] int anio = 2026)
         {
-            var pagos = LeerXml<List<PagoXml>>(PagosPath) ?? new List<PagoXml>();
-            var bancos = LeerXml<List<Banco>>(BancosPath) ?? new List<Banco>();
-            var mesesInteres = new[] { 3, 2, 1 }; 
-            int anioInteres = 2024;
+            try
+            {
+                var pagos = LeerXml<List<PagoXml>>(PagosPath) ?? new List<PagoXml>();
+                var bancos = LeerXml<List<Banco>>(BancosPath) ?? new List<Banco>();
 
-            var reporte = bancos.Select(b => new {
-                Nombre = b.Nombre,
-                Valores = mesesInteres.Select(m => new {
-                    Mes = m,
-                    Total = pagos.Where(p => p.Codigo == b.Codigo && DateTime.ParseExact(p.Fecha, "dd/MM/yyyy", CultureInfo.InvariantCulture).Month == m && DateTime.ParseExact(p.Fecha, "dd/MM/yyyy", CultureInfo.InvariantCulture).Year == anioInteres).Sum(p => p.Monto)
-                }).ToList()
-            }).ToList();
+                var reporte = bancos.Select(b => new {
+                    Nombre = b.Nombre,
+                    Total = pagos.Where(p => {
+                        if (DateTime.TryParseExact(p.Fecha, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime fecha))
+                        {
+                            return p.Codigo == b.Codigo && fecha.Month == mes && fecha.Year == anio;
+                        }
+                        return false;
+                    }).Sum(p => p.Monto)
+                }).ToList();
 
-            return Ok(reporte);
+                return Ok(reporte);
+            }
+            catch (Exception ex) { return BadRequest(ex.Message); }
         }
 
         private T LeerXml<T>(string path) where T : class
         {
             if (!System.IO.File.Exists(path)) return null;
-            XmlSerializer ser = new XmlSerializer(typeof(T));
-            using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-            {
-                return (T)ser.Deserialize(fs);
-            }
+            try {
+                XmlSerializer ser = new XmlSerializer(typeof(T));
+                using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+                {
+                    return (T)ser.Deserialize(fs);
+                }
+            } catch { return null; }
         }
 
         private void GuardarXml<T>(T data, string path)
         {
-            XmlSerializer ser = new XmlSerializer(typeof(T));
-            string folder = Path.GetDirectoryName(path);
-            if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
-            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
-            {
-                ser.Serialize(fs, data);
-            }
+            try {
+                XmlSerializer ser = new XmlSerializer(typeof(T));
+                string folder = Path.GetDirectoryName(path);
+                if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+                using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+                {
+                    ser.Serialize(fs, data);
+                }
+            } catch { }
         }
     }
 }

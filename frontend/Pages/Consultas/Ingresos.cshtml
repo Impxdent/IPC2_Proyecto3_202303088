@@ -1,35 +1,51 @@
 @page
+@model frontend.Pages.Consultas.IngresosModel
+
 <div class="container no-print">
     <h2 class="mb-4">Consultar Ingresos por Banco</h2>
     
-    <div class="row g-3 align-items-end mb-5 bg-white p-3 rounded shadow-sm">
+    <form method="post" class="row g-3 align-items-end mb-5 bg-white p-3 rounded shadow-sm">
         <div class="col-md-3">
             <label>Mes</label>
-            <select id="mes" class="form-select">
+            <select asp-for="MesSeleccionado" class="form-select">
                 <option value="1">Enero</option>
                 <option value="2">Febrero</option>
                 <option value="3">Marzo</option>
-            </select>
+                <option value="4">Abril</option>
+                <option value="5">Mayo</option>
+                <option value="6">Junio</option>
+                <option value="7">Julio</option>
+                <option value="8">Agosto</option>
+                <option value="9">Septiembre</option>
+                <option value="10">Octubre</option>
+                <option value="11">Noviembre</option>
+                <option value="12">Diciembre</option>
+                </select>
         </div>
         <div class="col-md-3">
             <label>Año</label>
-            <input type="number" id="anio" class="form-control" value="2024">
+            <input type="number" asp-for="AnioSeleccionado" class="form-control" value="2026">
         </div>
         <div class="col-md-3">
-            <button onclick="cargarGrafica()" class="btn btn-primary w-100">Procesar</button>
+            <button type="submit" class="btn btn-primary w-100">Procesar</button>
         </div>
         <div class="col-md-3">
-            <button onclick="window.print()" class="btn btn-danger w-100">Guardar como PDF</button>
+            <button type="button" onclick="window.print()" class="btn btn-danger w-100">PDF</button>
         </div>
-    </div>
+    </form>
 </div>
 
-<div id="contenedorGrafica" class="bg-white p-5 rounded shadow">
-    </div>
-
-<style>
-    @@media print {
-        .no-print { display: none !important; }
-        body { background: white; }
+<div id="contenedorGrafica" class="d-flex align-items-end justify-content-around bg-white p-5 rounded shadow" style="height: 400px;">
+    @foreach (var banco in Model.DatosGrafica)
+    {
+        var altura = (banco.Total / 100).ToString("0") + "px";
+        
+        <div class="text-center">
+            <div style="width: 60px; height: @altura; background-color: #4472c4; margin: 0 auto;" 
+                 title="Q @banco.Total">
+            </div>
+            <p class="fw-bold mt-2">@banco.Nombre</p>
+            <small class="text-muted">Q @banco.Total</small>
+        </div>
     }
-</style>
+</div>
